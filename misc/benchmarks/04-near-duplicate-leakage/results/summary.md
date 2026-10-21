@@ -1,0 +1,35 @@
+# 04. Near duplicate leakage inflates a score with no change to the model
+
+Measured on: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 logical cores, 15.7 GiB, Linux-6.18.44-fc-v139-x86_64-with-glibc2.39, Python 3.13.16, numpy 2.5.3.
+Determinism: seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1.
+
+## Random split against group split, as duplication loosens
+
+| Frame jitter (feature units) | Random split accuracy (%) | Group split accuracy (%) | Inflation (percentage points) | Test items whose nearest train neighbour shares their group, random split (%) | Same, group split (%) |
+| --- | --- | --- | --- | --- | --- |
+| 0.05 | 97.3 | 51.6 | +45.7 | 92.2 | 0.0 |
+| 0.15 | 99.2 | 42.8 | +56.4 | 96.9 | 0.0 |
+| 0.35 | 96.9 | 36.1 | +60.7 | 96.1 | 0.0 |
+| 0.80 | 94.7 | 31.2 | +63.5 | 93.0 | 0.0 |
+
+## A leakage audit a reviewer can demand
+
+| Distance threshold | Test items flagged as leaked | Flagged items that really share a group (%) | Leaked items caught (%) |
+| --- | --- | --- | --- |
+| 0.5 | 0 | 0.0 | 0.0 |
+| 1.0 | 0 | 0.0 | 0.0 |
+| 1.5 | 364 | 100.0 | 75.8 |
+| 2.0 | 480 | 100.0 | 100.0 |
+
+## Cost
+
+| Operation | Median latency (ms) | IQR (ms) | p95 (ms) | Repeats |
+| --- | --- | --- | --- | --- |
+| score the held out split | 4.68 | 0.42 | 5.81 | 7 |
+| leakage audit over the same pair | 4 | 0.113 | 4.13 | 7 |
+
+Dataset holds 1280 items in 320 groups across 8 classes, 48 dimensional features.
+
+## Reading
+
+The same classifier, the same features and the same amount of training data give two different held out numbers, and the gap is as large as 63.5 percentage points. At the tightest duplication tested, the random split reports 97.3 per cent where the group split reports 51.6 per cent, because 92.2 per cent of test items find a training neighbour from their own group. The inflation shrinks as the duplicates get less similar, which is the honest caveat: leakage is a property of the data, not a constant. The audit costs the same order of work as scoring the split itself, so there is no efficiency argument for skipping it. The claim under test fails.

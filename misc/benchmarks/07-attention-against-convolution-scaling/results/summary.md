@@ -1,0 +1,36 @@
+# 07. Attention and convolution do not scale alike
+
+Measured on: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 logical cores, 15.7 GiB, Linux-6.18.44-fc-v139-x86_64-with-glibc2.39, Python 3.13.16, numpy 2.5.3.
+Determinism: seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1.
+
+## Token count sweep
+
+| Tokens | Equivalent patch grid | Attention median (ms) | Convolution median (ms) | Attention over convolution | Score matrix at single precision (MiB, computed) | Layer activations at single precision (MiB, computed) | Matrix over activations |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 64 | 8 by 8 | 0.0443 | 0.0575 | 0.8 | 0.02 | 0.016 | 1 |
+| 128 | 11 by 11 | 0.255 | 0.07 | 3.6 | 0.06 | 0.031 | 2 |
+| 256 | 16 by 16 | 1.13 | 0.0993 | 11.4 | 0.25 | 0.062 | 4 |
+| 512 | 23 by 23 | 4.64 | 0.177 | 26.3 | 1.00 | 0.125 | 8 |
+| 1024 | 32 by 32 | 16.7 | 0.401 | 41.8 | 4.00 | 0.250 | 16 |
+| 2048 | 45 by 45 | 69.6 | 1.29 | 54.0 | 16.00 | 0.500 | 32 |
+
+## Fitted growth exponents
+
+| Operator | Fitted growth exponent in token count | Expected from the arithmetic |
+| --- | --- | --- |
+| single head attention | 2.09 | two |
+| depthwise convolution, support 9 | 0.88 | one |
+
+## What each doubling of the token count costs
+
+| Token count doubling | Attention cost multiplier | Convolution cost multiplier |
+| --- | --- | --- |
+| 64 to 128 | 5.76 | 1.22 |
+| 128 to 256 | 4.45 | 1.42 |
+| 256 to 512 | 4.09 | 1.78 |
+| 512 to 1024 | 3.61 | 2.27 |
+| 1024 to 2048 | 4.15 | 3.21 |
+
+## Reading
+
+Measured over a token sweep, attention grows with an exponent of 2.09 in the token count and the fixed support convolution with an exponent of 0.88, which is what the arithmetic says and what a single resolution comparison hides. The cost ratio between the two moves across the sweep rather than staying put, and attention first becomes the more expensive of the two at 128 tokens on this machine, so a comparison taken below that point and a comparison taken above it support opposite conclusions. The score matrix is the second half of the story: it is a computed quantity rather than a measured one, and at the top of the sweep it needs 32 times the memory of the activations it is computed from. The claim under test fails, and the honest form of such a comparison states the token count, the support, the head count and the resolution together.

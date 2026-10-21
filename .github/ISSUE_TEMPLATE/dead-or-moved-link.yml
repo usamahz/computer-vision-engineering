@@ -1,0 +1,35 @@
+name: Dead or moved link
+description: A URL in the list no longer resolves to the source it cites, or has moved.
+title: "Link: "
+labels: ["link"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: URL as it appears in the list
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What happens
+      options:
+        - Gone, the page returns not found
+        - Moved, it redirects somewhere else
+        - Replaced by a different document at the same address
+        - Refuses automated clients but loads in a browser
+        - A mirror or aggregator when the canonical copy exists
+    validations:
+      required: true
+  - type: input
+    id: new_url
+    attributes:
+      label: Canonical replacement, if known
+      description: The authors' or the publisher's own copy. Not a mirror.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How you checked
+      description: The status code, the redirect chain, or what a browser shows. A page that only refuses automated clients is blocked, not dead, and stays.
+    validations:
+      required: true

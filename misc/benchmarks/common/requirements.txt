@@ -1,0 +1,5 @@
+# The pinned environment shared by every benchmark. These are the versions the committed
+# results in every misc/benchmarks/NN-slug/results/ directory were produced with, on the machine
+# named in each README. Change a pin and the committed results have to be regenerated.
+numpy==2.5.3
+pillow==12.3.0

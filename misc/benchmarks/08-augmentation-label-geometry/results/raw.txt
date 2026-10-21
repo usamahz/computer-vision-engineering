@@ -1,0 +1,54 @@
+# 08. A geometric augmentation that leaves the label alone breaks the label
+
+claim under test: augmentation is a property of the input pipeline, so a stronger policy is a free improvement
+
+==============================================================================
+machine (measured at run time, not typed into a README)
+==============================================================================
+  cpu                : Intel(R) Xeon(R) Processor @ 2.10GHz
+  cores              : 4 logical, 4 physical
+  memory             : 15.7 GiB
+  virtual machine    : yes, guest of a hypervisor
+  vector extensions  : sse4_2, avx, avx2, fma, avx512f, avx512_vnni, amx_int8
+  accelerators       : none detected
+  platform           : Linux-6.18.44-fc-v139-x86_64-with-glibc2.39
+  python             : 3.13.16
+  numpy              : 2.5.3 (blas: scipy-openblas 0.3.34.106.0)
+  pillow             : 12.3.0
+  thread limits      : OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1
+  mode               : full
+==============================================================================
+seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1
+
+
+--- Three label handling strategies against the truth ---
+
+| Augmentation | Overlap when the label is left alone | Overlap when the box corners are mapped | Area of the mapped box over the true box | Overlap when the mask is transformed |
+| --- | --- | --- | --- | --- |
+| horizontal flip | 0.352 | 1.000 | 1.000 | 1.000 |
+| rotate ninety degrees | 0.370 | 1.000 | 1.000 | 1.000 |
+| rotate fifteen degrees | 0.788 | 0.753 | 1.328 | 1.000 |
+| crop and resize | 0.639 | 0.990 | 0.999 | 1.000 |
+| stretch, aspect changed | 0.328 | 0.991 | 1.000 | 1.000 |
+
+--- What a wrong label costs over a training run ---
+
+| Probability the augmentation fires | Mean overlap of the supervised box with the object | Share of the training signal pointing at the wrong place (%) |
+| --- | --- | --- |
+| 0.10 | 0.933 | 6.7 |
+| 0.25 | 0.832 | 16.8 |
+| 0.50 | 0.664 | 33.6 |
+| 0.90 | 0.395 | 60.5 |
+
+--- Cost of handling the label ---
+
+| Label handling | Median latency (ms) | IQR (ms) | p95 (ms) | Repeats |
+| --- | --- | --- | --- | --- |
+| transform the mask | 0.257 | 0.0248 | 0.289 | 7 |
+| map the box corners | 0.00867 | 0.000724 | 0.00972 | 7 |
+
+Mask is 384 by 384 pixels, nearest neighbour resampling, one object.
+
+--- reading ---
+
+Leaving the label alone is not a small error. A horizontal flip, the cheapest augmentation in every pipeline, drops the overlap between the supervised box and the object to 0.352, which is below the threshold at which a detection would count as correct at evaluation time. Mapping the box corners fixes the axis aligned transforms exactly, and for a fifteen degree rotation it returns an overlap of 0.753 while inflating the box to 1.328 times the true area, because an axis aligned hull of a rotated rectangle is not the box of the rotated object. Only transforming the mask and re-deriving the box recovers the truth in every case. Re-deriving costs more than mapping four corners, and that cost is the whole reason pipelines get this wrong. The claim under test fails: a stronger policy is free only for the input.

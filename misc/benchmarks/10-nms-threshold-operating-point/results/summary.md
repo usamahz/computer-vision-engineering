@@ -1,0 +1,41 @@
+# 10. The suppression threshold is a product decision, and it is not free
+
+Measured on: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 logical cores, 15.7 GiB, Linux-6.18.44-fc-v139-x86_64-with-glibc2.39, Python 3.13.16, numpy 2.5.3.
+Determinism: seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1.
+
+## Suppression threshold sweep, sparse scenes
+
+| Overlap threshold | Detections kept | All point average precision (%) | Precision at score 0.5 (%) | Recall at score 0.5 (%) | Harmonic mean at that score | Detections acted on |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.30 | 718 | 85.90 | 82.7 | 87.2 | 0.849 | 427 |
+| 0.45 | 883 | 86.73 | 72.1 | 91.1 | 0.805 | 512 |
+| 0.50 | 940 | 87.35 | 69.7 | 93.1 | 0.797 | 541 |
+| 0.60 | 1060 | 85.34 | 62.6 | 93.8 | 0.751 | 607 |
+| 0.70 | 1164 | 82.73 | 56.5 | 93.8 | 0.705 | 673 |
+| 0.90 | 1223 | 81.67 | 53.7 | 93.8 | 0.683 | 707 |
+| no suppression | 1225 | 81.66 | 53.7 | 93.8 | 0.683 | 708 |
+
+## Suppression threshold sweep, crowded scenes
+
+| Overlap threshold | Detections kept | All point average precision (%) | Precision at score 0.5 (%) | Recall at score 0.5 (%) | Harmonic mean at that score | Detections acted on |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.30 | 1572 | 54.77 | 82.5 | 54.4 | 0.656 | 1151 |
+| 0.45 | 2446 | 72.99 | 74.8 | 73.6 | 0.742 | 1717 |
+| 0.50 | 2815 | 77.89 | 71.3 | 79.5 | 0.752 | 1946 |
+| 0.60 | 3559 | 84.15 | 64.7 | 89.2 | 0.750 | 2404 |
+| 0.70 | 4174 | 84.39 | 58.6 | 92.7 | 0.718 | 2757 |
+| 0.90 | 4577 | 83.31 | 54.5 | 93.5 | 0.689 | 2990 |
+| no suppression | 4582 | 83.19 | 54.5 | 93.5 | 0.688 | 2995 |
+
+## Cost of the suppression step alone
+
+| Boxes entering suppression | Boxes surviving | Median latency (ms) | p95 (ms) | Microseconds per box |
+| --- | --- | --- | --- | --- |
+| 100 | 97 | 1.94 | 2.4 | 19.43 |
+| 500 | 411 | 9.41 | 10.6 | 18.83 |
+| 1000 | 737 | 20.2 | 20.8 | 20.24 |
+| 2000 | 1243 | 44.5 | 47.4 | 22.27 |
+
+## Reading
+
+The threshold moves both numbers, and it moves them differently. Average precision ranges over 5.69 points on sparse scenes and 29.62 points on crowded ones, while the harmonic mean of precision and recall at a fixed deployable score ranges over 0.166 and 0.096. They do not peak in the same place: on sparse scenes average precision is highest at overlap threshold 0.50 and the deployed operating point is highest at 0.30, and on crowded scenes at 0.70 and 0.50. Tuning against the published metric and tuning against the product are therefore different exercises, and a paper that reports only the former has not reported the decision a team has to make. The cost half of the claim fails too, with one caveat stated plainly: this is a greedy suppression written in numpy with a Python loop over surviving boxes, so the absolute milliseconds characterise this implementation and not a fused kernel. What transfers is the shape. Suppressing 2000 boxes takes 44.5 milliseconds here with a ninety fifth percentile of 47.4, the cost per box rises with the box count rather than staying flat, and the box count rises with the crowding of the scene. A latency figure should state whether this step is inside the timer. Most published figures do not.

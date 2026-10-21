@@ -1,0 +1,69 @@
+# 12. Depth error grows with the square of distance
+
+claim under test: a stereo system has a depth error, quotable as one number
+
+==============================================================================
+machine (measured at run time, not typed into a README)
+==============================================================================
+  cpu                : Intel(R) Xeon(R) Processor @ 2.10GHz
+  cores              : 4 logical, 4 physical
+  memory             : 15.7 GiB
+  virtual machine    : yes, guest of a hypervisor
+  vector extensions  : sse4_2, avx, avx2, fma, avx512f, avx512_vnni, amx_int8
+  accelerators       : none detected
+  platform           : Linux-6.18.44-fc-v139-x86_64-with-glibc2.39
+  python             : 3.13.16
+  numpy              : 2.5.3 (blas: scipy-openblas 0.3.34.106.0)
+  pillow             : 12.3.0
+  thread limits      : OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1
+  mode               : full
+==============================================================================
+seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1
+
+
+--- Depth error by true distance, measured ---
+
+| True distance (m) | True disparity (px) | Pixels measured | Median disparity error (px) | Median depth error (m) | Depth error the square law predicts from that disparity error (m) | Relative depth error (%) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1.99 | 42.27 | 9660 | 0.147 | 0.007 | 0.007 | 0.35 |
+| 4.06 | 20.69 | 9660 | 0.150 | 0.029 | 0.029 | 0.72 |
+| 7.86 | 10.69 | 9660 | 0.150 | 0.109 | 0.110 | 1.38 |
+| 16.73 | 5.02 | 9660 | 0.018 | 0.060 | 0.060 | 0.36 |
+| 30.05 | 2.79 | 9660 | 0.127 | 1.304 | 1.362 | 4.34 |
+| 82.15 | 1.02 | 9660 | 0.018 | 1.482 | 1.460 | 1.80 |
+
+--- The law isolated, one disparity error propagated ---
+
+| True distance (m) | Disparity error held fixed at the frame median (px, measured) | Implied depth error (m, computed) | Implied relative error (%, computed) |
+| --- | --- | --- | --- |
+| 1.99 | 0.124 | 0.006 | 0.29 |
+| 4.06 | 0.124 | 0.024 | 0.60 |
+| 7.86 | 0.124 | 0.091 | 1.16 |
+| 16.73 | 0.124 | 0.414 | 2.47 |
+| 30.05 | 0.124 | 1.335 | 4.44 |
+| 82.15 | 0.124 | 9.977 | 12.14 |
+
+--- What the frame average hides ---
+
+| Statistic over the whole frame | Value |
+| --- | --- |
+| mean absolute depth error (m) | 0.741 |
+| median absolute depth error (m) | 0.093 |
+| ninety fifth percentile absolute depth error (m) | 2.571 |
+| median absolute depth error in the nearest band (m) | 0.007 |
+| median absolute depth error in the farthest band (m) | 1.482 |
+| fitted growth exponent from the measured medians | 1.46 |
+| fitted growth exponent with the disparity error held fixed, computed | 2.00 |
+| growth exponent the geometry predicts | 2.00 |
+
+--- Matching cost ---
+
+| Stage | Median latency (ms) | IQR (ms) | p95 (ms) | Repeats |
+| --- | --- | --- | --- | --- |
+| block matching with subpixel refinement | 125 | 22.4 | 172 | 7 |
+
+Pair is 180 by 384 pixels, window 7 by 7, disparity search zero to 48, focal length 700 pixels, baseline 0.12 metres.
+
+--- reading ---
+
+The square law holds, and it holds in the conditional form that matters. Within each distance band the depth error predicted from that band's own measured disparity error agrees with the measured depth error to within 4 per cent, and propagating one fixed disparity error, the frame median of 0.124 pixels, through the same geometry gives a fitted exponent of 2.00 against the two the geometry predicts. Fitting the measured medians directly gives 1.46 rather than two, and the reason is worth stating rather than smoothing away: the measured disparity error is not constant across bands, because whether a band's true disparity happens to sit near a whole pixel changes how well a parabolic refinement recovers it. Either way the consequence is the same. Median depth error grows from 0.007 metres at 1.99 metres to 1.482 metres at 82.15 metres, a factor of 212 across a distance factor of 41, and relative error grows with it. The single frame mean of 0.741 metres is therefore a property of how far away this particular scene happened to be and of which band held the most pixels, not a property of the stereo system. The claim under test fails: a depth error has to be quoted per distance or with the working range it applies to.

@@ -1,0 +1,8 @@
+# Build residue. The root of this repository carries README.md, CONTRIBUTING.md and LICENSE
+# and nothing else that shows up in a listing.
+__pycache__/
+*.pyc
+.venv/
+link-report.md
+link-report.json
+.DS_Store

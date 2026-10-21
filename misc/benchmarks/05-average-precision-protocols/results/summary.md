@@ -1,0 +1,52 @@
+# 05. One set of detections, three average precision protocols, three numbers
+
+Measured on: Intel(R) Xeon(R) Processor @ 2.10GHz, 4 logical cores, 15.7 GiB, Linux-6.18.44-fc-v139-x86_64-with-glibc2.39, Python 3.13.16, numpy 2.5.3.
+Determinism: seed=20261018, thread limits OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1.
+
+## Four protocols, one set of detections
+
+| Protocol, scored on the identical detections | Overlap threshold | Interpolation | Average precision (%) |
+| --- | --- | --- | --- |
+| eleven point interpolation of the early challenge | 0.50 | eleven recall points | 77.97 |
+| all point interpolation that replaced it | 0.50 | every recall change | 80.07 |
+| hundred and one point interpolation | 0.50 | hundred and one recall points | 79.88 |
+| hundred and one point, averaged over ten thresholds | 0.50 to 0.95 | hundred and one recall points | 43.77 |
+
+## Discarding low scoring detections before scoring
+
+| Score floor applied before scoring | Detections kept | All point average precision (%) | Averaged over thresholds (%) |
+| --- | --- | --- | --- |
+| 0.00 | 1471 | 80.07 | 43.77 |
+| 0.05 | 1390 | 80.01 | 43.71 |
+| 0.10 | 1277 | 79.58 | 43.51 |
+| 0.30 | 951 | 77.93 | 42.45 |
+| 0.50 | 737 | 72.33 | 40.23 |
+
+## Capping detections per image
+
+| Detections per image kept | Detections scored | All point average precision (%) |
+| --- | --- | --- |
+| 1 | 299 | 32.25 |
+| 5 | 1223 | 79.35 |
+| 20 | 1471 | 80.07 |
+| 100 | 1471 | 80.07 |
+
+## Per class averaging against pooling
+
+| Averaging | All point average precision (%) | Hundred and one point (%) |
+| --- | --- | --- |
+| mean over classes | 80.07 | 79.88 |
+| pooled across classes | 79.99 | 79.83 |
+
+## Cost of scoring
+
+| Protocol | Median latency (ms) | IQR (ms) | p95 (ms) | Repeats |
+| --- | --- | --- | --- | --- |
+| all point, single threshold | 25.6 | 1.29 | 28 | 7 |
+| hundred and one point, ten thresholds | 265 | 9.62 | 284 | 7 |
+
+Scored set holds 1471 detections against 865 ground truth boxes over 300 images and 4 classes.
+
+## Reading
+
+One fixed set of detections scores 77.97, 80.07, 79.88 and 43.77 per cent under the four protocols, a total spread of 36.30 points with no change to the detector, the data or the matching. Most of that spread is the overlap threshold averaging rather than the interpolation, and it is worth separating the two: holding the overlap threshold at one half, the three interpolation rules alone still differ by 2.10 points, which is the margin a typical paper claims over its baseline. Three further protocol choices move the number as much. Discarding detections below half confidence costs 7.74 points of all point average precision, so a pipeline tuned for a sensible operating point scores worse than one that emits junk it would never act on. Capping detections per image moves it again, and so does swapping mean over classes for pooling across classes. On the pair of detectors, every protocol ranked the same one first, so the ordering was robust here, but the measured gap between them ranged from 2.80 to 6.85 points depending on protocol, which is the difference between a result worth shipping and a rounding error. The claim under test fails: an average precision figure is a property of a detector and a protocol together.

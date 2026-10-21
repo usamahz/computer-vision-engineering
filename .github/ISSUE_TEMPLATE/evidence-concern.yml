@@ -1,0 +1,52 @@
+name: Evidence concern
+description: A number behind an entry is missing a field, contradicts itself, or cannot be reproduced.
+title: "Evidence: "
+labels: ["evidence"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The evidence standard is in CONTRIBUTING.md and misc/notes/conventions.md section 7. A missing field means watchlist or cut, never a softer wording.
+  - type: input
+    id: entry
+    attributes:
+      label: Entry concerned, title and URL
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: The claim, quoted from the source
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of claim
+      options:
+        - Accuracy, eight fields
+        - Speed, seven fields
+    validations:
+      required: true
+  - type: textarea
+    id: missing
+    attributes:
+      label: Fields missing or contradicted
+      description: Name each field exactly as CONTRIBUTING.md names it, and say what the source gives instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: ruling
+    attributes:
+      label: Ruling sought
+      options:
+        - Recorded unverified, the entry does not rest on the number
+        - Watchlist, the entry rests on the number
+        - Cut, the fields contradict or the protocol is unrecoverable
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction, if attempted
+      description: The machine, named exactly, and what was measured. Not someone else's hardware quoted as yours.

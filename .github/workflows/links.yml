@@ -1,0 +1,55 @@
+name: links
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Weekly, Monday early morning UTC, off the hour to avoid the scheduler rush.
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  links:
+    name: links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Link checker
+        id: check
+        run: python3 misc/scripts/check_links.py --report link-report.md --json link-report.json
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-report
+          path: |
+            link-report.md
+            link-report.json
+          if-no-files-found: ignore
+      - name: Open or update the dead link issue
+        if: failure() && steps.check.outcome == 'failure' && (github.event_name == 'schedule' || github.ref == 'refs/heads/main')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          title="Dead or mirrored links found by the link checker"
+          existing=$(gh issue list --repo "${GITHUB_REPOSITORY}" --state open --search "\"${title}\" in:title" --json number --jq '.[0].number // empty')
+          body_file=$(mktemp)
+          {
+            echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            cat link-report.md
+          } > "${body_file}"
+          if [ -n "${existing}" ]; then
+            gh issue comment "${existing}" --repo "${GITHUB_REPOSITORY}" --body-file "${body_file}"
+          else
+            gh label create link --repo "${GITHUB_REPOSITORY}" --color B60205 --description "Dead or moved link" 2>/dev/null || true
+            gh issue create --repo "${GITHUB_REPOSITORY}" --title "${title}" --label link --body-file "${body_file}"
+          fi

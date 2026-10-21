@@ -1,0 +1,87 @@
+name: Add an entry
+description: Propose a source for the core list or the watchlist.
+title: "Add: "
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read CONTRIBUTING.md first. Most proposals are declined, and a declined proposal is still recorded with the rule it failed.
+  - type: input
+    id: title
+    attributes:
+      label: Title, as the source gives it
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Canonical URL
+      description: The authors' own copy, the official page or the arXiv abstract page. Not a PDF path, not a mirror, not an aggregator.
+    validations:
+      required: true
+  - type: dropdown
+    id: section
+    attributes:
+      label: Section it belongs to
+      options:
+        - "1. Start here"
+        - "2. Image formation"
+        - "3. Classical foundations"
+        - "4. Datasets, labels and splits"
+        - "5. Evaluation"
+        - "6. Convolutional architectures"
+        - "7. Attention, vision transformers and hybrids"
+        - "8. Training"
+        - "9. Self-supervised learning and vision foundation models"
+        - "10. Detection and segmentation"
+        - "11. Video"
+        - "12. 3D"
+        - "13. Generative vision"
+        - "14. Vision-language models"
+        - "15. Efficiency and deployment"
+        - "16. Robustness and failure modes"
+        - "Watchlist"
+    validations:
+      required: true
+  - type: input
+    id: reason
+    attributes:
+      label: Reason line
+      description: Why a reader would open it, under 120 characters, capital to full stop. No digits, no author names, no praise, no second person.
+    validations:
+      required: true
+  - type: dropdown
+    id: source_type
+    attributes:
+      label: Kind of primary source
+      options:
+        - Original paper
+        - The authors' own repository
+        - Official model card or weights page
+        - Framework or compiler documentation
+        - Dataset paper or official dataset page
+        - Standard or specification
+    validations:
+      required: true
+  - type: textarea
+    id: displaces
+    attributes:
+      label: What it displaces
+      description: If the subsection already holds six entries, name the one this replaces and argue it. Otherwise say the subsection has room.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: The number it rests on, if any
+      description: If the entry rests on a performance number, give every evidence field from CONTRIBUTING.md. If it does not, say so.
+    validations:
+      required: true
+  - type: textarea
+    id: core_test
+    attributes:
+      label: Core or watchlist
+      description: Does a specification or paper, a shipped implementation and a public measurement stating every field all exist? If not, give the event that would promote it.
+    validations:
+      required: true
