@@ -126,7 +126,7 @@ Reproduce it: [misc/benchmarks/01-transfer-function-pixels](misc/benchmarks/01-t
 
 ### Sensors and noise
 
-- [EMVA Standard 1288](https://www.emva.org/standards-technology/emva-1288/emva-standard-1288-downloads/) - Where dynamic range, read noise and quantum efficiency get definitions a measurement can falsify.
+- [EMVA Standard 1288](https://www.emva.org/standards-technology/emva-1288/emva-standard-1288-downloads-2/) - Where dynamic range, read noise and quantum efficiency get definitions a measurement can falsify.
 - [Practical Poissonian-Gaussian noise modeling and fitting](https://webpages.tuni.fi/foi/sensornoise.html) - Why raw noise grows with the signal, and how that dependence is fitted from a single frame.
 - [Learning to See in the Dark](https://arxiv.org/abs/1805.01934) - What survives in a raw frame when almost no photons arrived.
 
@@ -136,7 +136,7 @@ Reproduce it: [misc/benchmarks/01-transfer-function-pixels](misc/benchmarks/01-t
 - [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/) - Where the piecewise sRGB curve and its conversions to other spaces are kept in a maintained standard.
 - [ITU-R BT.709](https://www.itu.int/rec/R-REC-BT.709) - Which primaries and camera encoding curve an unlabelled video frame is assumed to use.
 - [ITU-R BT.2100](https://www.itu.int/rec/R-REC-BT.2100) - Which transfer functions a high dynamic range signal may carry, and the display each one assumes.
-- [ICC Specifications](https://www.color.org/icc_specs2.xalter) - How a colour space travels between two pipelines that agree on pixels and disagree on colour.
+- [ICC Specifications](https://www.color.org/icc_specs2/) - How a colour space travels between two pipelines that agree on pixels and disagree on colour.
 
 ### The image signal processor
 
@@ -564,7 +564,7 @@ Speedups in this section are tied to their own hardware, batch size and timer bo
 
 - [XNNPACK](https://github.com/google/XNNPACK) - Which operators and instruction sets a CPU inference library covers, the list a runtime's fallback depends on.
 - [MLComputeUnits](https://developer.apple.com/documentation/coreml/mlcomputeunits) - Why a Core ML latency figure is unreadable until the compute units the model may use are named.
-- [Apple Neural Engine Transformers](https://github.com/apple/ml-ane-transformers) - Which tensor layouts and operator choices a neural engine accepts before a transformer runs on it.
+- [Apple Neural Engine Transformers](https://github.com/apple-aiml-research/ml-ane-transformers) - Which tensor layouts and operator choices a neural engine accepts before a transformer runs on it.
 - [LoadGen](https://github.com/mlcommons/inference/blob/master/loadgen/README.md) - Where the timer boundary around each query is fixed in code.
 
 Reproduce it: [misc/benchmarks/15-int8-quantisation-accuracy-and-latency](misc/benchmarks/15-int8-quantisation-accuracy-and-latency/README.md), integer quantisation accuracy and latency by layer shape.
